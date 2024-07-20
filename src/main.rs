@@ -1,5 +1,6 @@
 use reqwest::Client;
 use std::env;
+use tokio;
 
 #[tokio::main]
 async fn main() {
@@ -30,6 +31,17 @@ async fn main() {
         }
         "get-s3" => {
             if let Err(e) = get_s3(file_path).await {
+                eprintln!("Error: {}", e);
+            }
+        }
+    
+        "put-mysql" => {
+            if let Err(e) = put_mysql(file_path).await {
+                eprintln!("Error: {}", e);
+            }
+        }
+        "get-mysql" => {
+            if let Err(e) = get_mysql(file_path).await {
                 eprintln!("Error: {}", e);
             }
         }
@@ -75,6 +87,27 @@ async fn get_s3(file_name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new();
     let response = client
         .get(format!("http://localhost:8000/get-s3/{}", file_name))
+        .send()
+        .await?;
+    println!("Response: {}", response.text().await?);
+    Ok(())
+}
+
+async fn put_mysql(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new();
+    let response = client
+        .post("http://localhost:8000/put-mysql")
+        .body(file_path.to_string())
+        .send()
+        .await?;
+    println!("Response: {}", response.text().await?);
+    Ok(())
+}
+
+async fn get_mysql(file_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let client = Client::new();
+    let response = client
+        .get(format!("http://localhost:8000/get-mysql/{}", file_name))
         .send()
         .await?;
     println!("Response: {}", response.text().await?);
